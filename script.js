@@ -97,7 +97,7 @@ function parseCSV(texto) {
 function identificarCategoria(nome) {
     const n = nome.toLowerCase();
     const keywordsOleo = ['oil','fluido','aditivo','unilit','petronas','ipiranga','lubrax','shell','castrol','ypf','texaco','havoline','bardahl','radiex','elaion','agro','selenia','5w30','15w40','20w50','lubri','extron','deiton','evora','lynix','top auto'];
-    const keywordsFiltro = ['filtro', 'fitro', 'filtrante', 'elemento', 'psl', 'tecfil', 'vox', 'fram', 'pel'];
+    const keywordsFiltro = ['filtro', 'fitro', 'filtrante', 'elemento', 'psl', 'tecfil', 'fram'];
     if (keywordsFiltro.some(key => n.includes(key))) return 'Filtro';
     if (keywordsOleo.some(key => n.includes(key))) return 'Óleo';
     return 'Vitrine';
@@ -153,3 +153,4 @@ function gerarPDF() {
     doc.autoTable({ head: [['Item', 'Sist.', 'Real', 'Dif.']], body: rows, startY: 20 });
     doc.save("divergencias.pdf");
 }
+
