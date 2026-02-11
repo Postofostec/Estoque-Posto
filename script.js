@@ -89,9 +89,12 @@ function parseCSV(texto) {
     const separador = ';'; 
     const cabecalho = linhas[0].split(separador).map(c => c.trim().toLowerCase());
     
+    // Mapeamento das novas colunas
     const idxNome = cabecalho.indexOf('des_item');
     const idxSaldo = cabecalho.indexOf('qtd_saldo');
     const idxBarra = cabecalho.indexOf('cod_barra');
+    const idxCodItem = cabecalho.indexOf('cod_item'); // Novo
+    const idxCusto = cabecalho.indexOf('val_custo_unitario'); // Novo
 
     for (let i = 1; i < linhas.length; i++) {
         const colunas = linhas[i].split(separador);
@@ -101,13 +104,17 @@ function parseCSV(texto) {
         const barraCompleta = colunas[idxBarra] || "";
         const barraFinal = barraCompleta.length >= 4 ? barraCompleta.slice(-4) : barraCompleta;
         let saldoLimpo = colunas[idxSaldo]?.replace(/\./g, '').replace(',', '.') || "0";
+        let custoLimpo = colunas[idxCusto]?.replace(/\./g, '').replace(',', '.') || "0";
 
         lista.push({ 
             nome: nome,
             barra: barraFinal,
+            codItem: colunas[idxCodItem] || "N/A", // Novo
+            custo: parseFloat(custoLimpo) || 0, // Novo
             saldo: parseFloat(saldoLimpo) || 0,
             categoria: identificarCategoria(nome), 
-            contagem: null 
+            contagem: null,
+            expressao: "" // Para guardar o texto da soma (ex: 2+8+3)
         });
     }
     return lista;
@@ -121,6 +128,18 @@ function identificarCategoria(nome) {
     if (keywordsFiltro.some(key => n.includes(key))) return 'Filtro';
     if (keywordsOleo.some(key => n.includes(key))) return 'Óleo';
     return 'Vitrine';
+}
+
+function avaliarExpressao(valor) {
+    try {
+        // Remove caracteres perigosos, permitindo apenas números e operadores básicos
+        const expressaoLimpa = valor.replace(/[^-+*/.0-9]/g, '');
+        if (!expressaoLimpa) return null;
+        // eval() resolve a conta matemática (ex: "2+8*3" vira 26)
+        return Function(`'use strict'; return (${expressaoLimpa})`)();
+    } catch (e) {
+        return null;
+    }
 }
 
 function renderizar(lista) {
@@ -151,7 +170,7 @@ function renderizar(lista) {
                 <small>Sistema: <strong>${p.saldo.toFixed(2)}</strong></small>
             </div>
             <div class="produto-acoes">
-                <input type="number" step="0.01" 
+                <input type="text" step="0.01" 
                        placeholder="Qtd" 
                        class="input-contagem" 
                        value="${valorContado}"
@@ -165,12 +184,15 @@ function renderizar(lista) {
     });
 }
 
-function atualizarValor(nome, valor, idCampo) {
+function atualizarValor(nome, valorOriginal, idCampo) {
     const p = produtos.find(item => item.nome === nome);
     if (p) {
-        p.contagem = valor === "" ? null : parseFloat(valor);
+        // Tenta calcular o que foi digitado
+        const resultado = avaliarExpressao(valorOriginal);
         
-        // SALVAMENTO AUTOMÁTICO NO LOCAL STORAGE
+        p.contagem = resultado;
+        p.expressao = valorOriginal; // Salva o texto digitado
+
         localStorage.setItem('estoque_salvo', JSON.stringify(produtos));
         
         const diffEl = document.getElementById(idCampo);
@@ -180,18 +202,17 @@ function atualizarValor(nome, valor, idCampo) {
                 diffEl.style.color = "#666";
             } else {
                 const d = p.contagem - p.saldo;
-                diffEl.innerText = "Dif: " + d.toFixed(2);
+                diffEl.innerText = `Total: ${p.contagem.toFixed(2)} | Dif: ${d.toFixed(2)}`;
                 diffEl.style.color = d < 0 ? '#e63946' : (d > 0 ? '#2a9d8f' : '#666');
             }
         }
     }
 }
-
 function gerarPDF() {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    const doc = new jsPDF('l', 'mm', 'a4'); // 'l' para modo paisagem (cabe mais colunas)
     
-    const dadosDivergentes = produtos
+    const divergentes = produtos
         .filter(p => p.contagem !== null)
         .map(p => {
             const dif = (p.contagem - p.saldo).toFixed(2);
@@ -199,25 +220,32 @@ function gerarPDF() {
         })
         .filter(p => p.dif !== 0)
         .map(p => [
+            p.codItem,
             `[${p.barra}] ${p.nome}`, 
+            p.custo.toFixed(2),
             p.saldo.toFixed(2), 
             p.contagem.toFixed(2), 
-            p.dif.toFixed(2)
+            p.dif.toFixed(2),
+            (p.dif * p.custo).toFixed(2) // Valor total do prejuízo/sobra
         ]);
 
-    if (dadosDivergentes.length === 0) {
-        alert("Nenhuma divergência encontrada nos itens contados!");
+    if (divergentes.length === 0) {
+        alert("Nenhuma divergência encontrada!");
         return;
     }
 
-    doc.setFontSize(16);
-    doc.text("Relatório de Divergências de Estoque", 14, 15);
+    doc.setFontSize(14);
+    doc.text("Relatório de Divergências de Estoque com Custo", 14, 15);
+    
     doc.autoTable({
-        head: [['Cód/Produto', 'Sistema', 'Real', 'Dif.']],
-        body: dadosDivergentes,
-        startY: 30,
-        headStyles: { fillColor: [214, 40, 40] }
+        head: [['ID', 'Produto', 'Custo Un.', 'Sist.', 'Real', 'Dif.', 'Total R$']],
+        body: divergentes,
+        startY: 25,
+        headStyles: { fillColor: [214, 40, 40] },
+        columnStyles: { 
+            1: { cellWidth: 80 }, // Largura do nome do produto
+        }
     });
 
-    doc.save(`divergencias-${new Date().toLocaleDateString()}.pdf`);
+    doc.save(`divergencias-com-custo.pdf`);
 }
