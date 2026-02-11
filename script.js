@@ -147,7 +147,6 @@ function renderizar(lista) {
     if (!listaEl) return;
     listaEl.innerHTML = '';
 
-    // --- LÓGICA DE ORDENAÇÃO APLICADA AQUI ---
     let listaParaExibir = [...lista]; 
     if (ordemAlfabetica) {
         listaParaExibir.sort((a, b) => a.nome.localeCompare(b.nome));
@@ -156,34 +155,64 @@ function renderizar(lista) {
     listaParaExibir.forEach((p, index) => {
         const card = document.createElement('div');
         card.className = 'produto-card';
-        
         const idDiff = `diff-${index}`;
-        const valorContado = p.contagem === null ? '' : p.contagem;
-        const d = p.contagem === null ? 0 : (p.contagem - p.saldo);
-        const cor = p.contagem === null ? '#666' : (d < 0 ? '#e63946' : (d > 0 ? '#2a9d8f' : '#666'));
         
+        // inputmode="decimal" chama o teclado numérico com ponto/vírgula
         card.innerHTML = `
             <div class="produto-info">
-                <span class="produto-nome">
-                    <b style="color: #fca311;">[${p.barra}]</b> ${p.nome}
-                </span>
-                <small>Sistema: <strong>${p.saldo.toFixed(2)}</strong></small>
+                <span class="produto-nome"><b style="color: #fca311;">[${p.barra}]</b> ${p.nome}</span>
+                <small>ID: ${p.codItem} | Sist: ${p.saldo.toFixed(2)}</small>
             </div>
             <div class="produto-acoes">
-                <input type="text" step="0.01" 
-                       placeholder="Qtd" 
+                <input type="text" 
+                       inputmode="decimal" 
                        class="input-contagem" 
-                       value="${valorContado}"
-                       oninput="atualizarValor('${p.nome.replace(/'/g, "\\'")}', this.value, '${idDiff}')">
-                <span id="${idDiff}" class="diff-badge" style="color: ${cor}">
-                    Dif: ${p.contagem === null ? '--' : d.toFixed(2)}
-                </span>
-            </div>
-        `;
+                       id="input-${index}"
+                       placeholder="0.00"
+                       value="${p.expressao || ''}"
+                       onblur="finalizarCalculo('${p.nome.replace(/'/g, "\\'")}', this.value, '${idDiff}')"
+                       onclick="setAtivo('input-${index}')">
+                <span id="${idDiff}" class="diff-badge">Dif: --</span>
+            </div>`;
         listaEl.appendChild(card);
     });
+
+    // Adiciona a barra de operadores no final da lista se não existir
+    if(!document.getElementById('helper')) {
+        const helper = document.createElement('div');
+        helper.id = 'helper';
+        helper.className = 'calc-helper';
+        helper.innerHTML = `
+            <button class="btn-op" onclick="inserirOp('+')">+</button>
+            <button class="btn-op" onclick="inserirOp('*')">*</button>
+            <button class="btn-op" style="background:#666" onclick="inserirOp('.')">.</button>
+        `;
+        document.body.appendChild(helper);
+    }
 }
 
+let inputAtivo = null;
+function setAtivo(id) { inputAtivo = id; }
+
+function inserirOp(op) {
+    if (inputAtivo) {
+        const campo = document.getElementById(inputAtivo);
+        campo.value += op;
+        campo.focus();
+    }
+}
+
+function finalizarCalculo(nome, valor, idCampo) {
+    const p = produtos.find(item => item.nome === nome);
+    if (p) {
+        const resultado = avaliarExpressao(valor);
+        p.contagem = resultado;
+        p.expressao = valor;
+
+        localStorage.setItem('estoque_salvo', JSON.stringify(produtos));
+        renderizar(produtos); // Re-renderiza para mostrar o total calculado
+    }
+}
 function atualizarValor(nome, valorOriginal, idCampo) {
     const p = produtos.find(item => item.nome === nome);
     if (p) {
