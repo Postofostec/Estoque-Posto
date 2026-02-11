@@ -1,4 +1,3 @@
-// 1. DECLARAÇÃO ÚNICA E VARIÁVEL DE ORDEM
 let produtos = []; 
 let ordemAlfabetica = false; 
 
@@ -7,16 +6,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const txtBusca = document.getElementById('txtBusca');
     const btnExportar = document.getElementById('btnExportar');
     const btnReset = document.getElementById('btnReset');
-    const btnOrdenar = document.getElementById('btnOrdenar'); // Captura o novo botão
+    const btnOrdenar = document.getElementById('btnOrdenar');
 
-    // --- LÓGICA DE RECUPERAÇÃO AUTOMÁTICA ---
+    // Recuperação de dados salvos
     const salvo = localStorage.getItem('estoque_salvo');
     if (salvo) {
         produtos = JSON.parse(salvo);
         renderizar(produtos);
     }
 
-    // Listener para o arquivo
     if(csvInput) {
         csvInput.addEventListener('change', function (event) {
             const file = event.target.files[0];
@@ -24,7 +22,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const reader = new FileReader();
             reader.onload = function (e) {
                 produtos = parseCSV(e.target.result);
-                // Salva a importação inicial
                 localStorage.setItem('estoque_salvo', JSON.stringify(produtos));
                 renderizar(produtos);
             };
@@ -32,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Busca em tempo real
     if(txtBusca) {
         txtBusca.addEventListener('input', function() {
             const termo = this.value.toLowerCase();
@@ -44,17 +40,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Botão de Ordenação A-Z
     if (btnOrdenar) {
         btnOrdenar.onclick = () => {
-            ordemAlfabetica = !ordemAlfabetica; // Alterna entre verdadeiro/falso
+            ordemAlfabetica = !ordemAlfabetica;
             btnOrdenar.innerText = ordemAlfabetica ? "Ordem: CSV" : "Ordem: A-Z";
             btnOrdenar.style.backgroundColor = ordemAlfabetica ? "#2a9d8f" : "#4a4e69";
-            renderizar(produtos); // Re-renderiza a lista com a nova ordem
+            renderizar(produtos);
         };
     }
 
-    // Botão de Reset
     if (btnReset) {
         btnReset.onclick = function() {
             if (confirm("Deseja apagar toda a contagem e começar do zero?")) {
@@ -62,12 +56,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 produtos = [];
                 document.getElementById('lista').innerHTML = '';
                 if (csvInput) csvInput.value = '';
-                alert("Sistema limpo para nova importação.");
+                alert("Sistema limpo.");
             }
         };
     }
 
-    // Filtros de Categoria
     const ids = ['btnOleo', 'btnFiltro', 'btnVitrine'];
     ids.forEach(id => {
         const btn = document.getElementById(id);
@@ -89,12 +82,11 @@ function parseCSV(texto) {
     const separador = ';'; 
     const cabecalho = linhas[0].split(separador).map(c => c.trim().toLowerCase());
     
-    // Mapeamento das novas colunas
     const idxNome = cabecalho.indexOf('des_item');
     const idxSaldo = cabecalho.indexOf('qtd_saldo');
     const idxBarra = cabecalho.indexOf('cod_barra');
-    const idxCodItem = cabecalho.indexOf('cod_item'); // Novo
-    const idxCusto = cabecalho.indexOf('val_custo_unitario'); // Novo
+    const idxCodItem = cabecalho.indexOf('cod_item');
+    const idxCusto = cabecalho.indexOf('val_custo_unitario');
 
     for (let i = 1; i < linhas.length; i++) {
         const colunas = linhas[i].split(separador);
@@ -107,14 +99,13 @@ function parseCSV(texto) {
         let custoLimpo = colunas[idxCusto]?.replace(/\./g, '').replace(',', '.') || "0";
 
         lista.push({ 
+            codItem: colunas[idxCodItem] || "N/A",
             nome: nome,
             barra: barraFinal,
-            codItem: colunas[idxCodItem] || "N/A", // Novo
-            custo: parseFloat(custoLimpo) || 0, // Novo
             saldo: parseFloat(saldoLimpo) || 0,
+            custo: parseFloat(custoLimpo) || 0,
             categoria: identificarCategoria(nome), 
-            contagem: null,
-            expressao: "" // Para guardar o texto da soma (ex: 2+8+3)
+            contagem: null 
         });
     }
     return lista;
@@ -124,22 +115,9 @@ function identificarCategoria(nome) {
     const n = nome.toLowerCase();
     const keywordsOleo = ['oil','fluido','aditivo','unilit','petronas','ipiranga','lubrax','shell','castrol','ypf','texaco','havoline','bardahl','radiex','elaion','agro','selenia','5w30','15w40','20w50','lubri','extron','deiton','evora','lynix','top auto'];
     const keywordsFiltro = ['filtro', 'fitro', 'filtrante', 'elemento', 'psl', 'tecfil', 'vox', 'fram'];
-
     if (keywordsFiltro.some(key => n.includes(key))) return 'Filtro';
     if (keywordsOleo.some(key => n.includes(key))) return 'Óleo';
     return 'Vitrine';
-}
-
-function avaliarExpressao(valor) {
-    try {
-        // Remove caracteres perigosos, permitindo apenas números e operadores básicos
-        const expressaoLimpa = valor.replace(/[^-+*/.0-9]/g, '');
-        if (!expressaoLimpa) return null;
-        // eval() resolve a conta matemática (ex: "2+8*3" vira 26)
-        return Function(`'use strict'; return (${expressaoLimpa})`)();
-    } catch (e) {
-        return null;
-    }
 }
 
 function renderizar(lista) {
@@ -156,72 +134,31 @@ function renderizar(lista) {
         const card = document.createElement('div');
         card.className = 'produto-card';
         const idDiff = `diff-${index}`;
+        const valorContado = p.contagem === null ? '' : p.contagem;
+        const d = p.contagem === null ? 0 : (p.contagem - p.saldo);
+        const cor = p.contagem === null ? '#666' : (d < 0 ? '#e63946' : (d > 0 ? '#2a9d8f' : '#666'));
         
-        // inputmode="decimal" chama o teclado numérico com ponto/vírgula
         card.innerHTML = `
             <div class="produto-info">
                 <span class="produto-nome"><b style="color: #fca311;">[${p.barra}]</b> ${p.nome}</span>
-                <small>ID: ${p.codItem} | Sist: ${p.saldo.toFixed(2)}</small>
+                <small>ID: ${p.codItem} | Sist: <strong>${p.saldo.toFixed(2)}</strong></small>
             </div>
             <div class="produto-acoes">
-                <input type="text" 
-                       inputmode="decimal" 
-                       class="input-contagem" 
-                       id="input-${index}"
-                       placeholder="0.00"
-                       value="${p.expressao || ''}"
-                       onblur="finalizarCalculo('${p.nome.replace(/'/g, "\\'")}', this.value, '${idDiff}')"
-                       onclick="setAtivo('input-${index}')">
-                <span id="${idDiff}" class="diff-badge">Dif: --</span>
+                <input type="number" step="0.01" inputmode="decimal"
+                       placeholder="Qtd" class="input-contagem" value="${valorContado}"
+                       oninput="atualizarValor('${p.nome.replace(/'/g, "\\'")}', this.value, '${idDiff}')">
+                <span id="${idDiff}" class="diff-badge" style="color: ${cor}">
+                    Dif: ${p.contagem === null ? '--' : d.toFixed(2)}
+                </span>
             </div>`;
         listaEl.appendChild(card);
     });
-
-    // Adiciona a barra de operadores no final da lista se não existir
-    if(!document.getElementById('helper')) {
-        const helper = document.createElement('div');
-        helper.id = 'helper';
-        helper.className = 'calc-helper';
-        helper.innerHTML = `
-            <button class="btn-op" onclick="inserirOp('+')">+</button>
-            <button class="btn-op" onclick="inserirOp('*')">*</button>
-            <button class="btn-op" style="background:#666" onclick="inserirOp('.')">.</button>
-        `;
-        document.body.appendChild(helper);
-    }
 }
 
-let inputAtivo = null;
-function setAtivo(id) { inputAtivo = id; }
-
-function inserirOp(op) {
-    if (inputAtivo) {
-        const campo = document.getElementById(inputAtivo);
-        campo.value += op;
-        campo.focus();
-    }
-}
-
-function finalizarCalculo(nome, valor, idCampo) {
+function atualizarValor(nome, valor, idCampo) {
     const p = produtos.find(item => item.nome === nome);
     if (p) {
-        const resultado = avaliarExpressao(valor);
-        p.contagem = resultado;
-        p.expressao = valor;
-
-        localStorage.setItem('estoque_salvo', JSON.stringify(produtos));
-        renderizar(produtos); // Re-renderiza para mostrar o total calculado
-    }
-}
-function atualizarValor(nome, valorOriginal, idCampo) {
-    const p = produtos.find(item => item.nome === nome);
-    if (p) {
-        // Tenta calcular o que foi digitado
-        const resultado = avaliarExpressao(valorOriginal);
-        
-        p.contagem = resultado;
-        p.expressao = valorOriginal; // Salva o texto digitado
-
+        p.contagem = valor === "" ? null : parseFloat(valor);
         localStorage.setItem('estoque_salvo', JSON.stringify(produtos));
         
         const diffEl = document.getElementById(idCampo);
@@ -231,17 +168,18 @@ function atualizarValor(nome, valorOriginal, idCampo) {
                 diffEl.style.color = "#666";
             } else {
                 const d = p.contagem - p.saldo;
-                diffEl.innerText = `Total: ${p.contagem.toFixed(2)} | Dif: ${d.toFixed(2)}`;
+                diffEl.innerText = "Dif: " + d.toFixed(2);
                 diffEl.style.color = d < 0 ? '#e63946' : (d > 0 ? '#2a9d8f' : '#666');
             }
         }
     }
 }
+
 function gerarPDF() {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('l', 'mm', 'a4'); // 'l' para modo paisagem (cabe mais colunas)
+    const doc = new jsPDF('l', 'mm', 'a4'); // Modo paisagem
     
-    const divergentes = produtos
+    const dadosDivergentes = produtos
         .filter(p => p.contagem !== null)
         .map(p => {
             const dif = (p.contagem - p.saldo).toFixed(2);
@@ -251,30 +189,27 @@ function gerarPDF() {
         .map(p => [
             p.codItem,
             `[${p.barra}] ${p.nome}`, 
-            p.custo.toFixed(2),
+            p.custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
             p.saldo.toFixed(2), 
             p.contagem.toFixed(2), 
             p.dif.toFixed(2),
-            (p.dif * p.custo).toFixed(2) // Valor total do prejuízo/sobra
+            (p.dif * p.custo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
         ]);
 
-    if (divergentes.length === 0) {
+    if (dadosDivergentes.length === 0) {
         alert("Nenhuma divergência encontrada!");
         return;
     }
 
-    doc.setFontSize(14);
-    doc.text("Relatório de Divergências de Estoque com Custo", 14, 15);
-    
+    doc.setFontSize(16);
+    doc.text("Relatório de Divergências com Impacto Financeiro", 14, 15);
     doc.autoTable({
-        head: [['ID', 'Produto', 'Custo Un.', 'Sist.', 'Real', 'Dif.', 'Total R$']],
-        body: divergentes,
+        head: [['ID', 'Produto', 'Custo Un.', 'Sist.', 'Real', 'Dif.', 'Impacto R$']],
+        body: dadosDivergentes,
         startY: 25,
         headStyles: { fillColor: [214, 40, 40] },
-        columnStyles: { 
-            1: { cellWidth: 80 }, // Largura do nome do produto
-        }
+        columnStyles: { 1: { cellWidth: 80 } }
     });
 
-    doc.save(`divergencias-com-custo.pdf`);
+    doc.save(`divergencias-financeiro-${new Date().toLocaleDateString()}.pdf`);
 }
