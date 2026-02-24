@@ -12,13 +12,29 @@ body {
     color: var(--dark);
 }
 
+/* Cria o alinhamento horizontal para a logo e o input de arquivo */
+.header-top {
+    display: flex;
+    justify-content: space-between; /* Manda a logo para a esquerda e o input para a direita */
+    align-items: center;
+    width: 100%;
+}
+
+/* Controla o tamanho da logo para não destruir o layout */
+.logo {
+    height: 50px; /* Ajuste conforme necessário */
+    width: auto;
+    object-fit: contain;
+}
+
+/* Ajuste no header original */
 header {
     background: var(--dark);
     padding: 20px;
     margin: -20px -20px 20px -20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
 }
 
 input[type="text"] {
@@ -118,4 +134,5 @@ button:active {
 .diff-badge {
     font-size: 12px;
     font-weight: bold;
+
 }
