@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conferência de Estoque</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+ <header>
+    <div class="header-top">
+        <img src="Logo.jpg" alt="Logo" class="logo">
+        <input type="file" id="csvInput" accept=".csv">
+    </div>
+    <input type="text" id="txtBusca" placeholder="Pesquisar produto (ex: Shell 5W30)...">
+</header>
+
+    <main>
+        <button id="btnVitrine">Vitrine</button>
+        <button id="btnOleo">Óleo</button>
+        <button id="btnFiltro">Filtro</button>
+        <button id="btnExportar" style="background: #d62828;">Gerar Relatório PDF</button>
+        <button id="btnReset" style="background-color: #d62828; color: white;">Limpar Contagem Atual</button>
+        <button id="btnOrdenar" style="background-color: #4a4e69; color: white;">Ordenar: A-Z</button>
+    </main>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="script.js"></script>
+
+<style>
+    .calc-helper {
+        position: sticky;
+        bottom: 0;
+        background: #f4f4f4;
+        display: flex;
+        justify-content: space-around;
+        padding: 10px;
+        border-top: 2px solid #ccc;
+        z-index: 1000;
+    }
+    .btn-op {
+        background: #fca311;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 20px;
+        font-weight: bold;
+        border-radius: 8px;
+    }
+    
+</style>
+
+    <section id="lista">
+        </section>
+
+</body>
+</html>
+
+
