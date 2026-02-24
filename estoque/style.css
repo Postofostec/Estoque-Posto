@@ -12,22 +12,21 @@ body {
     color: var(--dark);
 }
 
-/* Cria o alinhamento horizontal para a logo e o input de arquivo */
+/* Isso cria a linha horizontal para a logo e o botão de arquivo */
 .header-top {
     display: flex;
-    justify-content: space-between; /* Manda a logo para a esquerda e o input para a direita */
-    align-items: center;
+    justify-content: space-between; /* Empurra um para cada ponta */
+    align-items: center; /* Alinha no centro verticalmente */
     width: 100%;
 }
 
-/* Controla o tamanho da logo para não destruir o layout */
 .logo {
-    height: 50px; /* Ajuste conforme necessário */
+    height: 60px; /* Define um tamanho fixo para não explodir na tela */
     width: auto;
-    object-fit: contain;
+    border-radius: 5px; /* Deixa as bordas levemente arredondadas se quiser */
 }
 
-/* Ajuste no header original */
+/* Ajuste o header para garantir que a barra de busca continue embaixo */
 header {
     background: var(--dark);
     padding: 20px;
@@ -36,7 +35,6 @@ header {
     flex-direction: column;
     gap: 15px;
 }
-
 input[type="text"] {
     padding: 12px;
     border-radius: 8px;
@@ -136,3 +134,4 @@ button:active {
     font-weight: bold;
 
 }
+
