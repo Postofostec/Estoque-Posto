@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estoque Fostec</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <img src="Logo.jpg" alt="Logo" class="logo">
+            <h2 style="color: white; margin-left: 10px;">Conferência</h2>
+        </div>
+        <input type="text" id="txtBusca" placeholder="Pesquisar produto ou código...">
+    </header>
+    
+    <main class="grid-botoes">
+        <button id="btnVitrine">Vitrine</button>
+        <button id="btnOleo">Óleo</button>
+        <button id="btnFiltro">Filtro</button>
+        <button id="btnOrdenar" style="background: #4a4e69;">Ordem: A-Z</button>
+        <button id="btnExportar" style="background: #d62828;">PDF</button>
+        <button id="btnReset" style="background: #d62828;">Limpar</button>
+    </main>
+
+    <section id="lista"></section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

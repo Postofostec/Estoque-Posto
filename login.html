@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Fostec Cloud</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #14213d; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 90%; max-width: 320px; text-align: center; }
+        img { width: 80px; margin-bottom: 10px; }
+        h2 { color: #14213d; margin-bottom: 20px; font-size: 1.4rem; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 14px; background: #fca311; border: none; color: white; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        #mensagem { color: #e63946; font-size: 14px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <img src="Logo.jpg" alt="Logo">
+        <h2>Acesso Fostec</h2>
+        <input type="text" id="usuario" placeholder="Usuário">
+        <input type="password" id="senha" placeholder="Senha">
+        <button onclick="fazerLogin()">ENTRAR</button>
+        <p id="mensagem"></p>
+    </div>
+
+    <script>
+        const _URL = "https://odtcusgyukmjlrsouxud.supabase.co";
+        const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kdGN1c2d5dWttamxyc291eHVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNjMxNTcsImV4cCI6MjA5MDYzOTE1N30.L9Ws6Ex5r22r35SsszfXA2it5t7FDfPm3Q_yZgqhyO8";
+        const supabase = supabase.createClient(_URL, _KEY);
+
+        async function fazerLogin() {
+            const user = document.getElementById('usuario').value;
+            const pass = document.getElementById('senha').value;
+            const msg = document.getElementById('mensagem');
+
+            // Simulação de login simples (Para licenciamento real, usaríamos Auth do Supabase)
+            if(user === "fostec" && pass === "senha123") {
+                sessionStorage.setItem('logado', 'true');
+                msg.style.color = "green";
+                msg.innerText = "Buscando estoque na nuvem...";
+                
+                // Busca o arquivo mais recente no Storage
+                const { data, error } = await supabase.storage.from('estoques').list('', {
+                    limit: 100, offset: 0, sortBy: { column: 'updated_at', order: 'desc' }
+                });
+
+                if (data && data.length > 0) {
+                    const { data: fileData } = await supabase.storage.from('estoques').download(data[0].name);
+                    const texto = await fileData.text();
+                    localStorage.setItem('csv_nuvem', texto);
+                }
+                
+                window.location.href = 'index.html';
+            } else {
+                msg.innerText = "Usuário ou senha inválidos.";
+            }
+        }
+    </script>
+</body>
+</html>
