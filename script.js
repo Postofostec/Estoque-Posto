@@ -1,3 +1,7 @@
+// Verifica se o usuário passou pelo login
+if (sessionStorage.getItem('logado') !== 'true') {
+    window.location.href = 'login.html';
+}
 let produtos = []; 
 let ordemAlfabetica = false; 
 
@@ -61,6 +65,13 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
+    async function carregarArquivosDoServidor() {
+    const resposta = await fetch('http://localhost:3000/arquivos');
+    const arquivos = await reply.json();
+    
+    // Aqui você criaria um menu para o usuário escolher qual CSV abrir
+    console.log("Arquivos na pasta do PC:", arquivos);
+}
     const ids = ['btnOleo', 'btnFiltro', 'btnVitrine'];
     ids.forEach(id => {
         const btn = document.getElementById(id);
