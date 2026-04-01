@@ -49,18 +49,26 @@ input[type="file"] {
     font-size: 14px;
 }
 
-
-main{
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 colunas no PC */
-    gap: 8px;
-    margin-bottom: 20px;
+.input-contagem {
+    width: 80px;
+    padding: 10px;
+    border: 1.5px solid #14213d;
+    border-radius: 6px;
+    font-size: 16px; /* Evita o zoom automático do iPhone ao focar */
+    text-align: center;
 }
 
-@media (max-width: 480px) {
-    main {
-        grid-template-columns: repeat(2, 1fr); /* 2 colunas no Celular para ficar maior */
-    }
+/* Garante que o grid não quebre com o teclado aberto */
+.grid-botoes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #e5e5e5;
+    padding: 10px 0;
 }
 
 button {
