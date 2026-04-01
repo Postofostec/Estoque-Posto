@@ -26,8 +26,6 @@
     <script>
         const _URL = "https://odtcusgyukmjlrsouxud.supabase.co";
         const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kdGN1c2d5dWttamxyc291eHVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNjMxNTcsImV4cCI6MjA5MDYzOTE1N30.L9Ws6Ex5r22r35SsszfXA2it5t7FDfPm3Q_yZgqhyO8";
-        
-        // Inicialização correta
         const supabaseClient = supabase.createClient(_URL, _KEY);
 
         document.getElementById('btnEntrar').addEventListener('click', async () => {
@@ -37,32 +35,36 @@
 
             if(user === "fostec" && pass === "senha123") {
                 msg.style.color = "orange";
-                msg.innerText = "Conectando ao banco...";
+                msg.innerText = "Conectando ao Storage...";
 
                 try {
-                    // Tenta listar os arquivos no seu bucket 'estoques'
                     const { data, error } = await supabaseClient.storage.from('estoques').list();
-
                     if (error) throw error;
 
                     if (data && data.length > 0) {
-                        // Pega o arquivo mais recente
                         const ultimo = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                        msg.innerText = "Baixando: " + ultimo.name;
                         
-                        const { data: fileBlob, error: downloadError } = await supabaseClient.storage.from('estoques').download(ultimo.name);
-                        
-                        if (downloadError) throw downloadError;
+                        const { data: fileBlob, error: dlError } = await supabaseClient.storage.from('estoques').download(ultimo.name);
+                        if (dlError) throw dlError;
 
                         const texto = await fileBlob.text();
+                        
+                        // Limpa caches antigos e salva o novo
+                        localStorage.clear(); 
                         localStorage.setItem('csv_nuvem', texto);
+                        sessionStorage.setItem('logado', 'true');
+                        
+                        msg.style.color = "green";
+                        msg.innerText = "Sucesso! Abrindo...";
+                        
+                        setTimeout(() => { window.location.href = 'index.html'; }, 800);
+                    } else {
+                        msg.innerText = "Erro: Nenhum arquivo CSV encontrado no Storage.";
                     }
-
-                    sessionStorage.setItem('logado', 'true');
-                    window.location.href = 'index.html';
-
                 } catch (err) {
-                    console.error("Erro Supabase:", err);
-                    msg.innerText = "Erro ao buscar dados. Verifique o Bucket 'estoques'.";
+                    msg.innerText = "Erro: " + err.message;
+                    console.error(err);
                 }
             } else {
                 msg.innerText = "Usuário ou senha incorretos.";
