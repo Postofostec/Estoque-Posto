@@ -64,7 +64,37 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         };
     }
+// Busca a lista de arquivos assim que a página carrega
+async function listarArquivos() {
+    const res = await fetch('http://localhost:3000/arquivos');
+    const arquivos = await res.json();
+    const select = document.getElementById('listaArquivosServidor');
+    arquivos.forEach(arq => {
+        const opt = document.createElement('option');
+        opt.value = arq;
+        opt.innerText = arq;
+        select.appendChild(opt);
+    });
+}
 
+// Importa o arquivo selecionado
+async function importarDoServidor() {
+    const nomeArquivo = document.getElementById('listaArquivosServidor').value;
+    if (!nomeArquivo) return alert("Selecione um arquivo!");
+
+    const res = await fetch(`http://localhost:3000/arquivo/${nomeArquivo}`);
+    const textoCSV = await res.text();
+    
+    // Usa a sua função parseCSV que já criamos antes!
+    produtos = parseCSV(textoCSV);
+    localStorage.setItem('estoque_salvo', JSON.stringify(produtos));
+    renderizar(produtos);
+    alert("Arquivo carregado com sucesso do servidor local!");
+}
+
+// Chama a listagem ao abrir o app
+listarArquivos();
+    
     async function carregarArquivosDoServidor() {
     const resposta = await fetch('http://localhost:3000/arquivos');
     const arquivos = await reply.json();
@@ -124,7 +154,7 @@ function parseCSV(texto) {
 
 function identificarCategoria(nome) {
     const n = nome.toLowerCase();
-    const keywordsOleo = ['oil','fluido','aditivo','unilit','petronas','ipiranga','lubrax','shell','castrol','ypf','texaco','havoline','bardahl','radiex','elaion','agro','selenia','5w30','15w40','20w50','lubri','extron','deiton','evora','lynix','top auto'];
+    const keywordsOleo = ['oil','fluido','aditivo','unilit','petronas','ipiranga','lubrax','shell','castrol','ypf','texaco','havoline','bardahl','radiex','elaion','agro','selenia','5w30','15w40','20w50','lubri','extron','deiton','evora','ZZ','lynix','top auto'];
     const keywordsFiltro = ['filtro', 'fitro', 'filtrante', 'elemento', 'psl', 'tecfil', 'vox', 'fram'];
     if (keywordsFiltro.some(key => n.includes(key))) return 'Filtro';
     if (keywordsOleo.some(key => n.includes(key))) return 'Óleo';
