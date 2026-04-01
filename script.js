@@ -3,7 +3,6 @@ if (sessionStorage.getItem('logado') !== 'true') {
 }
 
 let produtos = [];
-let ordemAlfabetica = false;
 
 document.addEventListener('DOMContentLoaded', function () {
     const csvNuvem = localStorage.getItem('csv_nuvem');
@@ -17,71 +16,39 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.setItem('estoque_salvo', JSON.stringify(produtos));
         renderizar(produtos);
     }
-
-    // Eventos de Busca e Filtros
-    document.getElementById('txtBusca').addEventListener('input', function() {
-        const termo = this.value.toLowerCase();
-        renderizar(produtos.filter(p => p.nome.toLowerCase().includes(termo) || p.barra.includes(termo)));
-    });
-
-    document.getElementById('btnOrdenar').onclick = () => {
-        ordemAlfabetica = !ordemAlfabetica;
-        renderizar(produtos);
-    };
-
-    document.getElementById('btnReset').onclick = () => {
-        if(confirm("Reiniciar conferência?")) {
-            localStorage.clear();
-            window.location.href = 'login.html';
-        }
-    };
-
-    ['btnVitrine', 'btnOleo', 'btnFiltro'].forEach(id => {
-        document.getElementById(id).onclick = () => {
-            const cat = id.replace('btn', '');
-            renderizar(produtos.filter(p => p.categoria === cat));
-        };
-    });
-
-    document.getElementById('btnExportar').onclick = gerarPDF;
+    
+    // Configuração dos botões e busca (Mantenha suas funções de renderizar e exportar)
+    configurarEventos();
 });
 
-// Reutilize as funções parseCSV, identificarCategoria, renderizar, atualizarValor e gerarPDF do código anterior.
 function parseCSV(texto) {
     const linhas = texto.split('\n').filter(l => l.trim() !== '');
     const lista = [];
-    const separador = ';'; 
+    // O Linx geralmente usa ponto e vírgula
+    const separador = texto.includes(';') ? ';' : ','; 
+    
     const cabecalho = linhas[0].split(separador).map(c => c.trim().toLowerCase());
     
     const idxNome = cabecalho.indexOf('des_item');
     const idxSaldo = cabecalho.indexOf('qtd_saldo');
     const idxBarra = cabecalho.indexOf('cod_barra');
-    const idxCodItem = cabecalho.indexOf('cod_item');
-    const idxCusto = cabecalho.indexOf('val_custo_unitario');
 
     for (let i = 1; i < linhas.length; i++) {
         const colunas = linhas[i].split(separador);
         if (colunas.length < 2) continue;
 
-        const nome = colunas[idxNome] || "Sem Nome";
-        const barraCompleta = colunas[idxBarra] || "";
-        const barraFinal = barraCompleta.length >= 4 ? barraCompleta.slice(-4) : barraCompleta;
-        let saldoLimpo = colunas[idxSaldo]?.replace(/\./g, '').replace(',', '.') || "0";
-        let custoLimpo = colunas[idxCusto]?.replace(/\./g, '').replace(',', '.') || "0";
-
         lista.push({ 
-            codItem: colunas[idxCodItem] || "N/A",
-            nome: nome,
-            barra: barraFinal,
-            saldo: parseFloat(saldoLimpo) || 0,
-            custo: parseFloat(custoLimpo) || 0,
-            categoria: identificarCategoria(nome), 
+            nome: colunas[idxNome] || "Sem Nome",
+            barra: (colunas[idxBarra] || "").slice(-4),
+            saldo: parseFloat(colunas[idxSaldo]?.replace(',', '.')) || 0,
+            categoria: 'Vitrine', // Simplificado para teste
             contagem: null 
         });
     }
     return lista;
 }
 
+// ... restante das suas funções de renderizar() e gerarPDF()
 function identificarCategoria(nome) {
     const n = nome.toLowerCase();
     const keywordsOleo = ['oil','fluido','aditivo','unilit','petronas','ipiranga','lubrax','shell','castrol','ypf','texaco','havoline','bardahl','radiex','elaion','agro','selenia','5w30','15w40','20w50','lubri','extron','deiton','evora','lynix','top auto'];
