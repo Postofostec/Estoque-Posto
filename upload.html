@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Upload Fostec</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #e5e5e5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .admin-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; }
+        h2 { color: #14213d; }
+        .drop-zone { border: 2px dashed #fca311; padding: 40px; border-radius: 8px; cursor: pointer; margin: 20px 0; transition: 0.3s; }
+        .drop-zone:hover { background: #fffcf5; }
+        input[type="file"] { display: none; }
+        button { width: 100%; padding: 14px; background: #14213d; border: none; color: white; font-weight: bold; border-radius: 6px; cursor: pointer; }
+        #status { margin-top: 15px; font-size: 14px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-card">
+        <h2>Atualizar Estoque</h2>
+        <p>Selecione o novo arquivo CSV do Linx</p>
+        
+        <label for="arquivo" class="drop-zone" id="label-arquivo">
+            Clique aqui para selecionar o arquivo
+            <input type="file" id="arquivo" accept=".csv">
+        </label>
+
+        <button onclick="fazerUpload()" id="btnUpload">ENVIAR PARA A NUVEM</button>
+        <p id="status"></p>
+    </div>
+
+    <script>
+        const _URL = "https://odtcusgyukmjlrsouxud.supabase.co";
+        const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kdGN1c2d5dWttamxyc291eHVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNjMxNTcsImV4cCI6MjA5MDYzOTE1N30.L9Ws6Ex5r22r35SsszfXA2it5t7FDfPm3Q_yZgqhyO8";
+        const supabaseClient = supabase.createClient(_URL, _KEY);
+
+        const input = document.getElementById('arquivo');
+        const status = document.getElementById('status');
+        const label = document.getElementById('label-arquivo');
+
+        input.onchange = () => {
+            if(input.files[0]) label.innerText = "Arquivo: " + input.files[0].name;
+        };
+
+        async function fazerUpload() {
+            const file = input.files[0];
+            if (!file) return alert("Selecione um arquivo primeiro!");
+
+            status.innerText = "Enviando...";
+            status.style.color = "orange";
+
+            // Criamos um nome único baseado na data para não sobrescrever (histórico)
+            const nomeArquivo = `estoque_${Date.now()}.csv`;
+
+            try {
+                const { data, error } = await supabaseClient.storage
+                    .from('estoques')
+                    .upload(nomeArquivo, file);
+
+                if (error) throw error;
+
+                status.innerText = "✅ Estoque atualizado com sucesso!";
+                status.style.color = "green";
+                input.value = ""; 
+                label.innerText = "Clique aqui para selecionar outro";
+
+            } catch (err) {
+                status.innerText = "❌ Erro: " + err.message;
+                status.style.color = "red";
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
