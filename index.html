@@ -14,7 +14,14 @@
     </div>
     <input type="text" id="txtBusca" placeholder="Pesquisar produto (ex: Shell 5W30)...">
 </header>
-
+    
+<div style="margin: 10px 0; padding: 10px; background: #e5e5e5; border-radius: 8px;">
+    <label>Arquivos no Servidor:</label>
+    <select id="listaArquivosServidor">
+        <option value="">Selecione um arquivo...</option>
+    </select>
+    <button onclick="importarDoServidor()" style="background: #14213d; padding: 5px 10px;">Carregar</button>
+</div>
     <main>
         <button id="btnVitrine">Vitrine</button>
         <button id="btnOleo">Óleo</button>
