@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
         renderizar(produtos.filter(p => p.nome.toLowerCase().includes(termo) || p.barra.includes(termo)));
     });
 
-    // Ordenação
+    // Ordenação (Aqui sim re-renderiza pois muda a posição)
     document.getElementById('btnOrdenar').onclick = () => {
         ordemAlfabetica = !ordemAlfabetica;
         document.getElementById('btnOrdenar').innerText = ordemAlfabetica ? "Ordem: CSV" : "Ordem: A-Z";
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Reset
     document.getElementById('btnReset').onclick = () => {
-        if(confirm("Deseja apagar tudo e recarregar do servidor?")) {
+        if(confirm("Limpar tudo e recarregar da nuvem?")) {
             localStorage.clear();
             window.location.href = 'login.html';
         }
@@ -56,7 +56,6 @@ function parseCSV(texto) {
     const separador = texto.includes(';') ? ';' : ','; 
     const cabecalho = linhas[0].split(separador).map(c => c.trim().toLowerCase());
     
-    // Nomes das colunas do Linx
     const idxNome = cabecalho.indexOf('des_item');
     const idxSaldo = cabecalho.indexOf('qtd_saldo');
     const idxBarra = cabecalho.indexOf('cod_barra');
@@ -85,7 +84,7 @@ function parseCSV(texto) {
 function identificarCategoria(nome) {
     const n = nome.toLowerCase();
     if (n.includes('filtro')) return 'Filtro';
-    const oleos = ['oil','5w30','15w40','20w50','lubrax','shell','ipiranga','petronas'];
+    const oleos = ['oil','5w30','15w40','20w50','lubrax','shell','ipiranga','petronas','lubri','extron'];
     if (oleos.some(key => n.includes(key))) return 'Oleo';
     return 'Vitrine';
 }
@@ -102,26 +101,43 @@ function renderizar(lista) {
         const d = p.contagem === null ? 0 : (p.contagem - p.saldo);
         const cor = p.contagem === null ? '#666' : (d < 0 ? '#e63946' : (d > 0 ? '#2a9d8f' : '#666'));
         
+        // Atribuí um ID único para o badge de diferença para atualizar via JS direto
+        const diffId = `diff-${p.nome.replace(/\s+/g, '-')}`;
+
         card.innerHTML = `
             <div class="produto-info">
                 <span class="produto-nome"><b>[${p.barra}]</b> ${p.nome}</span>
                 <small>Sist: ${p.saldo.toFixed(2)}</small>
             </div>
             <div class="produto-acoes">
-                <input type="number" step="0.01" class="input-contagem" value="${p.contagem || ''}" 
-                       oninput="atualizarValor('${p.nome.replace(/'/g, "\\'")}', this.value)">
-                <span class="diff-badge" style="color: ${cor}">Dif: ${p.contagem === null ? '--' : d.toFixed(2)}</span>
+                <input type="number" 
+                       inputmode="decimal" 
+                       step="0.01" 
+                       class="input-contagem" 
+                       placeholder="0.00"
+                       value="${p.contagem !== null ? p.contagem : ''}" 
+                       oninput="atualizarValor('${p.nome.replace(/'/g, "\\'")}', this.value, '${diffId}')">
+                <span id="${diffId}" class="diff-badge" style="color: ${cor}">
+                    Dif: ${p.contagem === null ? '--' : d.toFixed(2)}
+                </span>
             </div>`;
         listaEl.appendChild(card);
     });
 }
 
-function atualizarValor(nome, valor) {
+function atualizarValor(nome, valor, diffId) {
     const p = produtos.find(item => item.nome === nome);
     if (p) {
         p.contagem = valor === "" ? null : parseFloat(valor);
         localStorage.setItem('estoque_salvo', JSON.stringify(produtos));
-        renderizar(produtos); // Re-renderiza para atualizar a diferença
+        
+        // ATUALIZAÇÃO MANUAL (SEM RE-RENDERIZAR A LISTA)
+        const diffEl = document.getElementById(diffId);
+        if (diffEl) {
+            const d = (p.contagem || 0) - p.saldo;
+            diffEl.innerText = p.contagem === null ? "Dif: --" : "Dif: " + d.toFixed(2);
+            diffEl.style.color = d < 0 ? '#e63946' : (d > 0 ? '#2a9d8f' : '#666');
+        }
     }
 }
 
